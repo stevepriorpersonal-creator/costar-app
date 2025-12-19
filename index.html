@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>COSTAR Architect</title>
+    
+    <!-- PWA MANIFEST LINKS -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <style>
+        /* SAME STYLES AS V13, JUST OPTIMIZED FOR MOBILE */
+        :root {
+            --bg-color: #0f172a; --card-bg: #1e293b; --panel-bg: #334155;
+            --text-main: #f1f5f9; --text-muted: #94a3b8; --accent: #38bdf8;
+            --accent-hover: #0ea5e9; --success: #22c55e; --danger: #ef4444;
+            --warning: #f59e0b; --costar-c: #f472b6; --costar-o: #fbbf24;
+            --costar-s: #34d399; --costar-t: #60a5fa; --costar-a: #a78bfa;
+            --costar-r: #f87171; --border-radius: 12px;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color); color: var(--text-main);
+            margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh;
+            -webkit-tap-highlight-color: transparent; /* Mobile polish */
+        }
+        .container { width: 100%; max-width: 900px; padding: 20px; box-sizing: border-box; padding-bottom: 100px; }
+        .page { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        h1 { font-size: 2.2rem; text-align: center; color: var(--accent); margin-bottom: 10px; margin-top: 0; }
+        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; color: var(--text-main); display: flex; align-items: center; gap: 10px; margin-top: 0; font-size: 1.5rem; }
+        p { line-height: 1.6; color: var(--text-muted); margin-bottom: 15px; }
+        
+        .metaphor { background: rgba(255, 255, 255, 0.05); border-left: 4px solid var(--accent); padding: 15px; margin: 20px 0; font-size: 1rem; border-radius: 0 12px 12px 0; }
+        .info-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 30px; }
+        @media (min-width: 700px) { .info-grid { grid-template-columns: 1fr 1fr; } }
+        .info-card { background-color: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid #334155; }
+        .info-card h4 { color: var(--text-main); border-bottom: 1px solid #475569; padding-bottom: 8px; margin-bottom: 10px; margin-top: 0; }
+        .magic-phrase { font-family: monospace; background-color: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; color: var(--accent); display: block; margin-bottom: 10px; font-size: 0.9rem; }
+        
+        .example-section { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 40px; }
+        @media (min-width: 600px) { .example-section { grid-template-columns: 1fr 1fr; } }
+        .example-box { padding: 15px; border-radius: 12px; font-size: 0.9rem; }
+        .example-bad { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); }
+        .example-good { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; margin-bottom: 8px; }
+        .badge-bad { background: var(--danger); color: white; }
+        .badge-good { background: var(--success); color: white; }
+
+        .playground { background-color: #171717; padding: 20px; border-radius: 12px; margin-top: 30px; border: 1px solid #404040; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); }
+        textarea { width: 100%; height: 120px; background-color: #262626; color: white; border: 1px solid #525252; border-radius: 8px; padding: 12px; box-sizing: border-box; font-family: monospace; font-size: 1rem; margin-bottom: 15px; resize: vertical; -webkit-appearance: none; }
+        textarea:focus { outline: none; border-color: var(--accent); }
+
+        .feedback-box, .suggestion-box { margin-top: 15px; padding: 15px; border-radius: 8px; display: none; line-height: 1.5; }
+        .feedback-box.good { background-color: rgba(34, 197, 94, 0.2); border: 1px solid var(--success); color: #d1fae5; }
+        .feedback-box.improve { background-color: rgba(245, 158, 11, 0.2); border: 1px solid var(--warning); color: #fef3c7; }
+        .suggestion-box { background-color: #1e1b4b; border: 1px solid var(--accent); }
+        .suggestion-label { font-size: 0.8rem; text-transform: uppercase; color: var(--accent); font-weight: bold; margin-bottom: 5px; display: block; }
+        .suggestion-text { font-family: monospace; color: #e2e8f0; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; }
+
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .btn, .btn-save, .btn-next, .btn-accept, .btn-launch { padding: 14px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 1rem; flex: 1; border: none; text-align: center; }
+        .btn { background-color: var(--accent); color: var(--bg-color); }
+        .btn-save { background-color: var(--panel-bg); color: var(--text-main); border: 1px solid var(--text-muted); }
+        .btn-next { background-color: transparent; border: 1px solid var(--accent); color: var(--accent); }
+        .btn-accept { background-color: var(--accent); color: var(--bg-color); width: 100%; margin-top: 10px;}
+        .btn-launch { background-color: #27272a; border: 1px solid #52525b; color: #e4e4e7; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        .costar-menu { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; padding: 10px; background: rgba(15, 23, 42, 0.95); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(5px); border-bottom: 1px solid #334155; }
+        .costar-letter { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; cursor: pointer; border: 2px solid transparent; background-color: var(--panel-bg); color: var(--text-muted); transition: all 0.2s; }
+        .c-active { background: var(--costar-c); color: #fff; box-shadow: 0 0 10px var(--costar-c); }
+        .o-active { background: var(--costar-o); color: #fff; box-shadow: 0 0 10px var(--costar-o); }
+        .s-active { background: var(--costar-s); color: #fff; box-shadow: 0 0 10px var(--costar-s); }
+        .t-active { background: var(--costar-t); color: #fff; box-shadow: 0 0 10px var(--costar-t); }
+        .a-active { background: var(--costar-a); color: #fff; box-shadow: 0 0 10px var(--costar-a); }
+        .r-active { background: var(--costar-r); color: #fff; box-shadow: 0 0 10px var(--costar-r); }
+
+        #welcome-screen { text-align: center; padding-top: 60px; }
+        .hero-logo { font-size: 5rem; margin-bottom: 20px; display: block; }
+        .builder-container { background-color: #111827; padding: 20px; border-radius: 12px; border: 1px solid var(--accent); }
+        .launch-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #334155; }
+        .launch-title { text-align: center; color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+    </style>
+
+    <script>
+        // PWA SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker: Registered'))
+                    .catch(err => console.log(`Service Worker: Error: ${err}`));
+            });
+        }
+
+        // APP LOGIC
+        var costarStack = {c: "", o: "", s: "", t: "", a: "", r: ""};
+        var STORAGE_KEY = "costar_data_v1";
+
+        function startApp() {
+            loadFromMemory();
+            document.getElementById('nav-bar').style.display = 'flex';
+            navigateTo('page-c');
+        }
+
+        function loadFromMemory() {
+            var savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                try { costarStack = JSON.parse(savedData);
+                    ['c', 'o', 's', 't', 'a', 'r'].forEach(key => {
+                        var el = document.getElementById('input-' + key);
+                        if (el && costarStack[key]) el.value = costarStack[key];
+                    });
+                } catch (e) { console.error(e); }
+            }
+        }
+
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            document.querySelectorAll('.feedback-box, .suggestion-box').forEach(b => b.style.display = 'none');
+            if (pageId === 'page-builder') renderBuilder();
+            window.scrollTo(0,0);
+        }
+
+        function saveToStack(letter) {
+            var val = document.getElementById('input-' + letter).value;
+            var btn = document.getElementById('btn-save-' + letter);
+            if (!val.trim()) { alert("Please type something first!"); return; }
+            costarStack[letter] = val;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(costarStack));
+            var originalText = btn.innerText;
+            btn.innerText = "✅ Saved!";
+            btn.style.backgroundColor = "var(--success)";
+            setTimeout(() => { btn.innerText = originalText; btn.style.backgroundColor = ""; }, 1500);
+        }
+
+        function renderBuilder() {
+            var txt = "";
+            if(costarStack.c) txt += "# CONTEXT:\n" + costarStack.c + "\n\n";
+            if(costarStack.o) txt += "# OBJECTIVE:\n" + costarStack.o + "\n\n";
+            if(costarStack.s) txt += "# STYLE:\n" + costarStack.s + "\n\n";
+            if(costarStack.t) txt += "# TONE:\n" + costarStack.t + "\n\n";
+            if(costarStack.a) txt += "# AUDIENCE:\n" + costarStack.a + "\n\n";
+            if(costarStack.r) txt += "# RESPONSE FORMAT:\n" + costarStack.r;
+            document.getElementById('final-stack').value = txt.trim();
+        }
+
+        function copyToClipboard() {
+            document.getElementById('final-stack').select();
+            document.execCommand('copy');
+        }
+
+        function downloadFile() {
+            var text = document.getElementById('final-stack').value;
+            if(!text) { alert("Nothing to download!"); return; }
+            var a = document.createElement("a");
+            a.href = window.URL.createObjectURL(new Blob([text], {type: "text/plain"}));
+            a.download = "costar-prompt.txt";
+            a.click();
+        }
+
+        function copyAndOpen(url) {
+            var text = document.getElementById('final-stack');
+            if(!text.value) { alert("Build a prompt first!"); return; }
+            text.select();
+            document.execCommand('copy');
+            window.open(url, '_blank');
+        }
+
+        function clearAllData() {
+            if(confirm("Delete all data?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                costarStack = {c:"", o:"", s:"", t:"", a:"", r:""};
+                document.querySelectorAll('textarea').forEach(el => el.value = "");
+                document.querySelectorAll('.feedback-box, .suggestion-box').forEach(b => b.style.display = 'none');
+                renderBuilder();
+            }
+        }
+
+        function acceptSuggestion(letter) {
+            var imp = document.getElementById('text-improved-' + letter).innerText;
+            document.getElementById('input-' + letter).value = imp;
+            document.getElementById('suggestion-' + letter).style.display = 'none';
+            var fb = document.getElementById('feedback-' + letter);
+            fb.innerHTML = "✨ Updated!"; fb.className = "feedback-box good"; fb.style.display = "block";
+        }
+
+        function analyze(letter) {
+            var input = document.getElementById('input-' + letter).value;
+            if(!input.trim()) { alert("Enter text first."); return; }
+            var fb = document.getElementById('feedback-' + letter);
+            var sb = document.getElementById('suggestion-' + letter);
+            var ti = document.getElementById('text-improved-' + letter);
+            
+            var good = false; var msg = ""; var imp = ""; var low = input.toLowerCase();
+            
+            var patterns = {
+                c: { r: /(i am|you are|act as|role|context)/i, f: "⚠️ Vague. Define WHO acts and WHAT the situation is.", i: "I am a [Expert Role] dealing with [Specific Problem]: " + input },
+                o: { r: /(create|generate|write|draft|analyze)/i, f: "⚠️ Weak Verbs.", i: "Your task is to Generate [Specific Outcome]: " + input },
+                s: { r: /(style|manner|voice|mimic|like a)/i, f: "⚠️ Generic.", i: "Write in the style of [Famous Expert]: " + input },
+                t: { r: /(tone|professional|casual|urgent)/i, f: "⚠️ Dry.", i: "Maintain a Professional yet Empathetic tone: " + input },
+                a: { r: /(audience|target|reader|viewer)/i, f: "⚠️ Unspecified.", i: "Target audience: C-Suite Executives. " + input },
+                r: { r: /(format|table|list|markdown|json)/i, f: "⚠️ Unstructured.", i: "Format as a Markdown Table. " + input }
+            };
+
+            if (patterns[letter].r.test(input) || (letter==='c' && input.length>25)) {
+                good = true; msg = "✅ Looks good.";
+            } else {
+                msg = patterns[letter].f; imp = patterns[letter].i;
+            }
+
+            fb.innerHTML = msg;
+            fb.className = good ? "feedback-box good" : "feedback-box improve";
+            fb.style.display = 'block';
+            
+            if (!good) { ti.innerText = imp; sb.style.display = 'block'; } else { sb.style.display = 'none'; }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div id="nav-bar" style="display:none;" class="costar-menu">
+            <div class="costar-letter c-active" onclick="navigateTo('page-c')">C</div>
+            <div class="costar-letter o-active" onclick="navigateTo('page-o')">O</div>
+            <div class="costar-letter s-active" onclick="navigateTo('page-s')">S</div>
+            <div class="costar-letter t-active" onclick="navigateTo('page-t')">T</div>
+            <div class="costar-letter a-active" onclick="navigateTo('page-a')">A</div>
+            <div class="costar-letter r-active" onclick="navigateTo('page-r')">R</div>
+            <div class="costar-letter" style="background-color: var(--success); color: white;" onclick="navigateTo('page-builder')">✅</div>
+        </div>
+
+        <div id="welcome-screen" class="page active">
+            <span class="hero-logo">🏗️</span>
+            <h1>COSTAR Architect</h1>
+            <p>Build professional prompts on the go.</p>
+            <button class="btn" onclick="startApp()" style="max-width: 200px;">Start Building</button>
+        </div>
+
+        <!-- REPEATED STRUCTURE FOR PAGES C, O, S, T, A, R (Abbreviated for length, logic matches previous) -->
+        <div id="page-c" class="page">
+            <h2 style="color: var(--costar-c);">Context</h2>
+            <div class="metaphor">🌍 <strong>Backdrop:</strong> Set the scene.</div>
+            <div class="playground">
+                <textarea id="input-c" placeholder="Who are you? What is the situation?"></textarea>
+                <div class="btn-group"><button class="btn" onclick="analyze('c')">Analyze</button><button id="btn-save-c" class="btn-save" onclick="saveToStack('c')">Save</button><button class="btn-next" onclick="navigateTo('page-o')">Next →</button></div>
+                <div id="feedback-c" class="feedback-box"></div><div id="suggestion-c" class="suggestion-box"><span class="suggestion-label">Improvement</span><div id="text-improved-c" class="suggestion-text"></div><button class="btn-accept" onclick="acceptSuggestion('c')">Use This</button></div>
+            </div>
+        </div>
+
+        <div id="page-o" class="page">
+            <h2 style="color: var(--costar-o);">Objective</h2>
+            <div class="metaphor">🎯 <strong>Bullseye:</strong> What is the task?</div>
+            <div class="playground">
+                <textarea id="input-o" placeholder="What should the AI do?"></textarea>
+                <div class="btn-group"><button class="btn" onclick="analyze('o')">Analyze</button><button id="btn-save-o" class="btn-save" onclick="saveToStack('o')">Save</button><button class="btn-next" onclick="navigateTo('page-s')">Next →</button></div>
+                <div id="feedback-o" class="feedback-box"></div><div id="suggestion-o" class="suggestion-box"><span class="suggestion-label">Improvement</span><div id="text-improved-o" class="suggestion-text"></div><button class="btn-accept" onclick="acceptSuggestion('o')">Use This</button></div>
+            </div>
+        </div>
+
+        <div id="page-s" class="page">
+            <h2 style="color: var(--costar-s);">Style</h2>
+            <div class="metaphor">✒️ <strong>The Pen:</strong> Writing persona.</div>
+            <div class="playground">
+                <textarea id="input-s" placeholder="Like who?"></textarea>
+                <div class="btn-group"><button class="btn" onclick="analyze('s')">Analyze</button><button id="btn-save-s" class="btn-save" onclick="saveToStack('s')">Save</button><button class="btn-next" onclick="navigateTo('page-t')">Next →</button></div>
+                <div id="feedback-s" class="feedback-box"></div><div id="suggestion-s" class="suggestion-box"><span class="suggestion-label">Improvement</span><div id="text-improved-s" class="suggestion-text"></div><button class="btn-accept" onclick="acceptSuggestion('s')">Use This</button></div>
+            </div>
+        </div>
+
+        <div id="page-t" class="page">
+            <h2 style="color: var(--costar-t);">Tone</h2>
+            <div class="metaphor">🎻 <strong>The Music:</strong> Emotional attitude.</div>
+            <div class="playground">
+                <textarea id="input-t" placeholder="Professional? Witty?"></textarea>
+                <div class="btn-group"><button class="btn" onclick="analyze('t')">Analyze</button><button id="btn-save-t" class="btn-save" onclick="saveToStack('t')">Save</button><button class="btn-next" onclick="navigateTo('page-a')">Next →</button></div>
+                <div id="feedback-t" class="feedback-box"></div><div id="suggestion-t" class="suggestion-box"><span class="suggestion-label">Improvement</span><div id="text-improved-t" class="suggestion-text"></div><button class="btn-accept" onclick="acceptSuggestion('t')">Use This</button></div>
+            </div>
+        </div>
+
+        <div id="page-a" class="page">
+            <h2 style="color: var(--costar-a);">Audience</h2>
+            <div class="metaphor">👂 <strong>The Listener:</strong> Who is this for?</div>
+            <div class="playground">
+                <textarea id="input-a" placeholder="Experts? Beginners?"></textarea>
+                <div class="btn-group"><button class="btn" onclick="analyze('a')">Analyze</button><button id="btn-save-a" class="btn-save" onclick="saveToStack('a')">Save</button><button class="btn-next" onclick="navigateTo('page-r')">Next →</button></div>
+                <div id="feedback-a" class="feedback-box"></div><div id="suggestion-a" class="suggestion-box"><span class="suggestion-label">Improvement</span><div id="text-improved-a" class="suggestion-text"></div><button class="btn-accept" onclick="acceptSuggestion('a')">Use This</button></div>
+            </div>
+        </div>
+
+        <div id="page-r" class="page">
+            <h2 style="color: var(--costar-r);">Response</h2>
+            <div class="metaphor">📦 <strong>The Container:</strong> Output format.</div>
+            <div class="playground">
+                <textarea id="input-r" placeholder="Table? List? Code?"></textarea>
+                <div class="btn-group"><button class="btn" onclick="analyze('r')">Analyze</button><button id="btn-save-r" class="btn-save" onclick="saveToStack('r')">Save</button><button class="btn-next" onclick="navigateTo('page-builder')">Finish →</button></div>
+                <div id="feedback-r" class="feedback-box"></div><div id="suggestion-r" class="suggestion-box"><span class="suggestion-label">Improvement</span><div id="text-improved-r" class="suggestion-text"></div><button class="btn-accept" onclick="acceptSuggestion('r')">Use This</button></div>
+            </div>
+        </div>
+
+        <div id="page-builder" class="page">
+            <h2 style="color: var(--success);">🧱 Final Stack</h2>
+            <div class="builder-container">
+                <textarea id="final-stack"></textarea>
+                <div class="btn-group" style="margin-top: 15px;">
+                    <button class="btn btn-save" onclick="copyToClipboard()">📋 Copy</button>
+                    <button class="btn btn-save" onclick="downloadFile()">📄 Save File</button>
+                    <button class="btn" style="background-color: var(--danger); color: white;" onclick="clearAllData()">🗑️ Clear</button>
+                </div>
+                <div class="launch-section">
+                    <div class="launch-title">🚀 Launch & Paste</div>
+                    <div class="btn-group">
+                        <button class="btn-launch" onclick="copyAndOpen('https://chatgpt.com/')">🤖 ChatGPT</button>
+                        <button class="btn-launch" onclick="copyAndOpen('https://claude.ai/new')">🧠 Claude</button>
+                        <button class="btn-launch" onclick="copyAndOpen('https://gemini.google.com/app')">✨ Gemini</button>
+                    </div>
+                </div>
+            </div>
+            <br><button class="btn" style="background-color: transparent; border: 1px solid var(--text-muted);" onclick="navigateTo('page-c')">← Start Over</button>
+        </div>
+    </div>
+</body>
+</html>
